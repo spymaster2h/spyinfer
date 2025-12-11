@@ -1,0 +1,16 @@
+[
+{
+  "directory": "/data/hangzhou6/dev/engine/spyinfer",
+  "arguments": ["/data/hangzhou6/.local/bin/gcc", "-c", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-std=c++20", "-fopenmp", "-mavx512f", "-mavx512bw", "-mavx512dq", "-DNDEBUG", "-o", "build/.objs/test_gevm/linux/x86_64/release/test_gevm.cpp.o", "test_gevm.cpp"],
+  "file": "test_gevm.cpp"
+},
+{
+  "directory": "/data/hangzhou6/dev/engine/spyinfer",
+  "arguments": ["/data/hangzhou6/.local/bin/gcc", "-c", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-std=c++20", "-fopenmp", "-mavx512f", "-mavx512bw", "-mavx512dq", "-DNDEBUG", "-o", "build/.objs/test_gemv/linux/x86_64/release/test_gemv.cpp.o", "test_gemv.cpp"],
+  "file": "test_gemv.cpp"
+},
+{
+  "directory": "/data/hangzhou6/dev/engine/spyinfer",
+  "arguments": ["/data/hangzhou6/.local/bin/gcc", "-c", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-std=c++20", "-I", "/data/hangzhou6/.xmake/packages/n/nlohmann_json/v3.12.0/b36e201b1206419d94ef523b409412cf/include", "-fopenmp", "-mavx512f", "-mavx512bw", "-mavx512dq", "-DNDEBUG", "-o", "build/.objs/main/linux/x86_64/release/main.cpp.o", "main.cpp"],
+  "file": "main.cpp"
+}]
