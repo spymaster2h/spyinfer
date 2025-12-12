@@ -7,6 +7,9 @@ add_requires("gtest")
 add_requires("openblas")
 add_requires("openmp")
 
+add_includedirs("src/include")
+
+
 
 target("main")
     set_kind("binary")
@@ -22,7 +25,7 @@ target("main")
 target("test_gemv")
     set_kind("binary")
     set_languages("c++20")
-    add_files("test_gemv.cpp")
+    add_files("test/test_gemv.cpp")
     add_packages("gtest")
     add_packages("openblas")  -- 引入 OpenBLAS 库
     add_deps("main")
@@ -31,7 +34,7 @@ target("test_gemv")
 target("test_gevm")
     set_kind("binary")
     set_languages("c++20")
-    add_files("test_gevm.cpp")
+    add_files("test/test_gevm.cpp")
     add_packages("gtest")
     add_packages("openblas")  -- 引入 OpenBLAS 库
     add_deps("main")
