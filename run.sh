@@ -1,1 +1,1 @@
-./build/linux/x86_64/release/main /data/hangzhou6/dev/model/Qwen3-0.6B 你好,介绍一下自己
+./build/linux/x86_64/release/main /data/hangzhou6/dev/model/Qwen3-0.6B
