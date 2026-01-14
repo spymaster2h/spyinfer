@@ -57,7 +57,7 @@ ScheduleOutput Scheduler::schedule()
         if (seq->is_prefill)
         {
             const auto& tokens = seq->get_tokens();
-            for (size_t i = 0; i < tokens.size(); ++i)
+            for (size_t i = seq->token_pos; i < tokens.size(); ++i)
             {
                 output.prompt_tokens.push_back(tokens[i]);
                 output.seq_idx_mapping.push_back(current_seq_idx);

@@ -28,6 +28,7 @@ public:
     std::vector<int> tokens;
     std::vector<int> block_table; // Maps logical block to physical block_id
     bool is_prefill = true;
+    int token_pos = 0; // 当前处理到的token位置
 };
 
 } // namespace spyinfer

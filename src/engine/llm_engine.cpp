@@ -54,6 +54,7 @@ void LLMEngine::append_to_request(int request_id, const std::pair<std::string, s
         // Error: cannot append to a running sequence
         return;
     }
+    seq.token_pos = seq.tokens.size();
     std::string new_text_chunk = tokenizer_->apply_chat_template({message});
     auto new_tokens = tokenizer_->encode(new_text_chunk);
 

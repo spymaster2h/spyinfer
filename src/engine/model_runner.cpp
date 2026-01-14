@@ -51,7 +51,7 @@ void ModelRunner::execute_model(ScheduleOutput& schedule_output, std::list<Seque
         if (seq->is_prefill)
         {
             has_prefill_seqs = true;
-            for (size_t i = 0; i < seq->get_len(); ++i)
+            for (size_t i = seq->token_pos; i < seq->get_len(); ++i)
             {
                 positions_vec.push_back(i);
             }
@@ -85,7 +85,11 @@ void ModelRunner::execute_model(ScheduleOutput& schedule_output, std::list<Seque
     int token_offset = 0;
     for (size_t i = 0; i < num_seqs; ++i)
     {
-        int num_processed_tokens = is_prefill_flags[i] ? schedule_output.context_lens[i] : 1;
+        auto seq_it = running_queue.begin();
+        std::advance(seq_it, i);
+        Sequence* current_seq = *seq_it;
+
+        int num_processed_tokens = is_prefill_flags[i] ? current_seq->get_len() - current_seq->token_pos : 1;
 
         // Logits for the last token of the current sequence
         float* last_token_logits = logits_data + (token_offset + num_processed_tokens - 1) * vocab_size;
