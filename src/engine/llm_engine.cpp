@@ -87,7 +87,7 @@ void LLMEngine::step() {
     auto& running_q = scheduler_->get_running_queue();
     for (auto it = running_q.begin(); it != running_q.end(); ) {
         if ((*it)->status == SequenceStatus::FINISHED) {
-            block_manager_->free((*it)->block_table);
+            // block_manager_->free((*it)->block_table); // Do NOT free blocks here!
             it = running_q.erase(it);
         } else {
             ++it;
@@ -139,6 +139,14 @@ std::vector<int> LLMEngine::get_output_tokens(int request_id) const {
         return it->second.get_tokens();
     }
     return {};
+}
+
+void LLMEngine::remove_request(int request_id) {
+    auto it = all_sequences_.find(request_id);
+    if (it != all_sequences_.end()) {
+        block_manager_->free(it->second.block_table);
+        all_sequences_.erase(it);
+    }
 }
 
 } // namespace spyinfer

@@ -21,12 +21,15 @@ ScheduleOutput Scheduler::schedule()
     while (it != waiting_queue_.end())
     {
         Sequence* seq = *it;
-        size_t num_required_blocks = (seq->get_len() + config_.kvcache_block_size - 1) / config_.kvcache_block_size;
-        if (block_manager_.get_num_free_blocks() >= num_required_blocks)
+        size_t total_blocks_needed = (seq->get_len() + config_.kvcache_block_size - 1) / config_.kvcache_block_size;
+        size_t current_blocks = seq->block_table.size();
+        size_t new_blocks_needed = (total_blocks_needed > current_blocks) ? (total_blocks_needed - current_blocks) : 0;
+
+        if (block_manager_.get_num_free_blocks() >= new_blocks_needed)
         {
             seq->status = SequenceStatus::RUNNING;
             // Allocate initial blocks
-            for (size_t i = 0; i < num_required_blocks; ++i)
+            for (size_t i = 0; i < new_blocks_needed; ++i)
             {
                 block_manager_.allocate(seq->block_table);
             }

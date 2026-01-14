@@ -33,6 +33,8 @@ public:
     // Checks if a specific request is finished
     bool is_request_finished(int request_id) const;
 
+    void remove_request(int request_id);
+
     // Gets the full output string for a request
     std::string get_output(int request_id) const;
 

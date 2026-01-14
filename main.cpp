@@ -47,11 +47,17 @@ int main(int argc, char* argv[])
 
         if (user_input == "/exit")
         {
+            if (conversation_id != -1) {
+                engine.remove_request(conversation_id);
+            }
             break;
         }
 
         if (user_input == "/new")
         {
+            if (conversation_id != -1) {
+               engine.remove_request(conversation_id);
+            }
             conversation_id = -1;
             std::cout << "Starting new conversation." << std::endl;
             continue;
