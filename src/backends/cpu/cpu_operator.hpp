@@ -2,7 +2,6 @@
 
 #include "../base_operator.hpp"
 
-
 namespace spyinfer {
 
 class Add : public BaseOperator
@@ -11,7 +10,6 @@ public:
     void forward_expand(std::unordered_map<std::string, std::any>& params) override;
     void compute(std::unordered_map<std::string, std::any>& params) override;
 };
-
 
 class Linear : public BaseOperator
 {
@@ -22,11 +20,10 @@ public:
 
 class Embedding : public BaseOperator
 {
-    public:
+public:
     void forward_expand(std::unordered_map<std::string, std::any>& params) override;
     void compute(std::unordered_map<std::string, std::any>& params) override;
 };
-
 
 class RMSNorm : public BaseOperator
 {
@@ -34,8 +31,6 @@ public:
     void forward_expand(std::unordered_map<std::string, std::any>& params) override;
     void compute(std::unordered_map<std::string, std::any>& params) override;
 };
-
-
 
 class Rope : public BaseOperator
 {
@@ -58,6 +53,4 @@ public:
     void compute(std::unordered_map<std::string, std::any>& params) override;
 };
 
-
-}
-
+} // namespace spyinfer

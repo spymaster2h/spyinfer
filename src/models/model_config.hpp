@@ -8,7 +8,7 @@ struct ModelConfig
 {
     std::string model_type;
     std::string hidden_act;
-    int hidden_size; // 隐藏层向量维度
+    int hidden_size;
     int intermediate_size;
     int num_key_value_heads;
     int num_hidden_layers;

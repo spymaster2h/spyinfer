@@ -1,41 +1,69 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
 #include "engine/llm_engine.hpp"
 #include "utils/tokenizer.hpp"
-
-
-
-//debug
-void print_tensor(const std::shared_ptr<Tensor>& tensor, int len)
-{
-    std::cout << "Tensor data: ";
-    for (int i = 0; i < len; ++i)
-    {
-        if (tensor->dtype() == DataType::fp32_t)
-            std::cout << tensor->data_ptr<float>()[i] << " ";
-        else if (tensor->dtype() == DataType::bf16_t)
-            std::cout << tensor->data_ptr<uint16_t>()[i] << " ";
-        else if (tensor->dtype() == DataType::int32_t)
-            std::cout << tensor->data_ptr<int>()[i] << " ";
-    }
-    std::cout << std::endl;
-}
+#include "utils/precision.hpp"
 
 
 int main(int argc, char* argv[])
 {
-    if (argc < 2)
+    std::string model_path;
+    std::string backend_type = "cpu"; 
+    
+    int opt;
+    while ((opt = getopt(argc, argv, "m:b:h")) != -1) {
+        switch (opt) {
+            case 'm':
+                model_path = optarg;
+                break;
+            case 'b':
+                backend_type = optarg;
+                break;
+            case 'h':
+                std::cout << "Usage: " << argv[0] << " -m <model_path> [-b <backend_type>]" << std::endl;
+                std::cout << "Available backends: cpu, cuda" << std::endl;
+                return 0;
+            default:
+                std::cerr << "Usage: " << argv[0] << " -m <model_path> [-b <backend_type>]" << std::endl;
+                std::cerr << "Use -h for help" << std::endl;
+                return 1;
+        }
+    }
+
+    if (model_path.empty())
     {
-        std::cerr << "Usage: " << argv[0] << " <model_path>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " -m <model_path> [-b <backend_type>]" << std::endl;
+        std::cerr << "Use -h for help" << std::endl;
         return 1;
     }
-    std::string model_path = argv[1];
 
-    spyinfer::LLMEngine engine(model_path);
 
-    std::cout << "LLM Engine initialized. Start a conversation." << std::endl;
-    std::cout << "Type '/new' to start a new conversation, or '/exit' to quit." << std::endl;
+    // 检查后端类型是否有效
+    if (backend_type != "cpu" && backend_type != "cuda") {
+        std::cerr << "Invalid backend type: " << backend_type << std::endl;
+        std::cerr << "Available backends: cpu, cuda" << std::endl;
+        return 1;
+    }
+
+#ifdef USE_CUDA
+    if (backend_type == "cuda") {
+        std::cout << "Using CUDA backend" << std::endl;
+    } else {
+        std::cout << "Using CPU backend" << std::endl;
+    }
+#else
+    if (backend_type == "cuda") {
+        std::cerr << "CUDA backend not compiled in. Rebuild with -DUSE_CUDA flag." << std::endl;
+        return 1;
+    }
+    std::cout << "Using CPU backend" << std::endl;
+#endif
+
+
+
+    spyinfer::LLMEngine engine(model_path, {{"backend_type", backend_type}});
 
     int conversation_id = -1;
 

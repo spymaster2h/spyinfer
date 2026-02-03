@@ -13,7 +13,7 @@
 
 namespace spyinfer {
 
-using ConfigValue = std::variant<int, float, bool>;
+using ConfigValue = std::variant<int, float, bool, std::string>;
 
 class LLMEngine
 {
@@ -53,9 +53,6 @@ private:
     std::unique_ptr<ModelRunner> model_runner_;
     std::unique_ptr<Tokenizer> tokenizer_;
 
-    
-    // --- New Ownership Model ---
-    // The engine owns all sequence objects in this map for pointer stability.
     std::unordered_map<int, Sequence> all_sequences_;
     int next_request_id_ = 0;
 };

@@ -44,7 +44,6 @@ void SafeTensorsReader::load_weights(const std::filesystem::path &model_dir, std
 
 void SafeTensorsReader::load_weights_from_safetensors(const std::filesystem::path &path, std::shared_ptr<BaseBackend> backend)
 {
-
     auto fd = open(path.c_str(), O_RDONLY);
     if (fd == -1)
     {
@@ -71,21 +70,11 @@ void SafeTensorsReader::load_weights_from_safetensors(const std::filesystem::pat
 
     std::string v(reinterpret_cast<const char *>(data_ptr) + 8, metadata_size);
     const auto metadata_json = nlohmann::json::parse(v);
-    auto weight_buffer = backend->allocate(tensor_size - metadata_size - 8);
+    weight_buffer_ = backend->allocate(tensor_size - metadata_size - 8);
 
-    if (1)
-    {
-        std::memcpy(weight_buffer->data(), reinterpret_cast<const char *>(data_ptr) + 8 + metadata_size, weight_buffer->size());
-    }
-    else
-    {
-#ifdef USE_CUDA
-        CUDA_CHECK(cudaSetDevice(target_device.index()));
-        CUDA_CHECK(cudaMemcpy(weight_buffer->data(), reinterpret_cast<const char *>(data_ptr) + 8 + metadata_size, weight_buffer->size(), cudaMemcpyHostToDevice));
-#else
-        throw std::runtime_error("CUDA support is not compiled, cannot copy to GPU device.");
-#endif
-    }
+    backend->copy_data_from_cpu(weight_buffer_->data(), reinterpret_cast<const char *>(data_ptr) + 8 + metadata_size, weight_buffer_->size());
+
+    std::string dtype;
 
     for (const auto &[name, tensor_info] : metadata_json.items())
     {
@@ -104,10 +93,33 @@ void SafeTensorsReader::load_weights_from_safetensors(const std::filesystem::pat
         }
         std::reverse(shape_array.begin(), shape_array.end());
 
-        std::string dtype = tensor_info.at("dtype").get<std::string>();
+        dtype = tensor_info.at("dtype").get<std::string>();
 
-        meta_data_[name] = Tensor::create_from_buffer(weight_buffer, shape_array, string_to_dtype(dtype), data_offsets.at(0));
+        meta_data_[name] = Tensor::create_from_buffer(weight_buffer_, shape_array, string_to_dtype(dtype), data_offsets.at(0));
     }
+
+    // 转fp16
+    #ifdef USE_CUDA
+        if (backend->get_backend_name() == "CUDA" && string_to_dtype(dtype) != DataType::fp16_t)
+        {
+            
+            if (string_to_dtype(dtype) == DataType::bf16_t)
+            {
+                backend->run({
+                {"op_type", OperatorType::BF16ToFP16},
+                {"input", reinterpret_cast<uint16_t*>(weight_buffer_->data())},
+                {"size", weight_buffer_->size() / 2}});
+
+                for (auto &[name, tensor] : meta_data_)
+                {
+                    if (tensor->dtype() == DataType::bf16_t)
+                    {
+                        tensor->set_dtype(DataType::fp16_t);
+                    }
+                }
+            }
+        }
+    #endif
 
     std::cout << "Loading metadata from: " << path.string() << ", size " << (tensor_size >> 20) << " MB";
 }

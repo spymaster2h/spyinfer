@@ -7,6 +7,7 @@ size_t get_dtype_size(DataType dtype)
     switch (dtype)
     {
         case DataType::bf16_t: return 2;
+        case DataType::fp16_t: return 2;
         case DataType::fp32_t: return 4;
         case DataType::int32_t: return 4;
         default: throw std::invalid_argument("Unsupported data type");
@@ -22,6 +23,10 @@ DataType string_to_dtype(const std::string& dtype_str)
     else if (dtype_str == "BF16")
     {
         return DataType::bf16_t;
+    }
+    else if (dtype_str == "F16")
+    {
+        return DataType::fp16_t;
     }
     throw std::invalid_argument("Unknown data type: " + dtype_str);
 }
@@ -66,7 +71,6 @@ std::shared_ptr<Tensor> Tensor::create(std::shared_ptr<BaseDevice> device, const
 
 std::shared_ptr<Tensor> Tensor::create_from_buffer(std::shared_ptr<MemoryBlock> memory_block, const std::array<int64_t, 4>& shape, DataType dtype, size_t offset_bytes)
 {
-    // Validate the view parameters before constructing
     size_t numel_view = 1;
     for (const auto& dim : shape)
     {
@@ -86,6 +90,11 @@ void Tensor::reshape(const std::array<int64_t, 4>& new_shape)
 {
     shape_ = new_shape;
     compute_strides();
+    numel_ = 1;
+    for (const auto& dim : shape_)
+    {
+        numel_ *= dim;
+    }
 }
 
 

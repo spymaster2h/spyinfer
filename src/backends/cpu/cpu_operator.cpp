@@ -11,12 +11,7 @@ namespace spyinfer {
 
 void Add::forward_expand(std::unordered_map<std::string, std::any>& params)
 {
-    auto backend = std::any_cast<std::shared_ptr<BaseBackend>>(params["backend"]);
     auto op_type = std::any_cast<OperatorType>(params["op_type"]);
-    if (op_type != OperatorType::Add)
-    {
-        throw std::invalid_argument("Add operator type mismatch");
-    }
     for (const auto& input_name : operator_input_names[op_type])
     {
         if (params.find(input_name) == params.end())
@@ -36,12 +31,6 @@ void Add::forward_expand(std::unordered_map<std::string, std::any>& params)
     if (output != nullptr && output->shape() != a->shape())
     {
         throw std::runtime_error("Output tensor shape must match input tensor shape");
-    }
-
-    if (output == nullptr)
-    {
-        output = Tensor::create(backend->get_devices()[0], a->shape(), a->dtype());
-        params["output"] = output;
     }
 
     is_parallelizable_ = a->numel() > 100000;
@@ -263,8 +252,7 @@ void Embedding::compute(std::unordered_map<std::string, std::any>& params)
             int offset = input->data_ptr<int>()[i] * hidden_size;
             if (weight->dtype() == DataType::fp32_t)
             {
-                std::copy_n(weight->data_ptr<float>() + offset, hidden_size,
-                            output->data_ptr<float>() + i * hidden_size);
+                std::copy_n(weight->data_ptr<float>() + offset, hidden_size, output->data_ptr<float>() + i * hidden_size);
             }
             else if (weight->dtype() == DataType::bf16_t)
             {
@@ -538,7 +526,7 @@ void Sigmoid::compute(std::unordered_map<std::string, std::any>& params)
         for (size_t i = start; i < end; ++i)
         {
             x64_sigmoid_fp32(output->data_ptr<float>() + i * input->shape().back(), input->data_ptr<float>() + i * input->shape().back(),
-                         input->shape().back());
+                             input->shape().back());
         }
     };
 

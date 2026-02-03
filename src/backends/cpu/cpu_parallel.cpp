@@ -1,9 +1,7 @@
 #include "cpu_parallel.hpp"
 
 ParallelExecutor::ParallelExecutor(size_t num_threads, size_t thread_buffer_size)
-    : start_barrier_(num_threads + 1),
-      finish_barrier_(num_threads + 1),
-      thread_buffer_size_(thread_buffer_size)
+    : start_barrier_(num_threads + 1), finish_barrier_(num_threads + 1), thread_buffer_size_(thread_buffer_size)
 {
     size_t threads_to_create = num_threads;
     const auto core_count = std::thread::hardware_concurrency();

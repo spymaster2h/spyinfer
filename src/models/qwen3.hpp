@@ -7,7 +7,10 @@
 #include "utils/safetensors_reader.hpp"
 #include "backends/base_backend.hpp"
 
+#include "utils/debug_helper.hpp"
 using namespace spyinfer;
+
+#define max_temp_size 100
 
 class Qwen3Weight
 {
@@ -60,7 +63,24 @@ public:
 class Qwen3
 {
 public:
-    Qwen3(const ModelConfig& config, std::shared_ptr<BaseBackend> backend) : config_(config), backend_(backend){}
+    Qwen3(const ModelConfig& config, std::shared_ptr<BaseBackend> backend) : config_(config), backend_(backend)
+    {
+        DataType dtype = DataType::fp32_t;
+
+        if (backend_->get_backend_name() == "CUDA") dtype = DataType::fp16_t;
+        hidden_states = backend_->create_tensor({1, 1, max_temp_size, config_.hidden_size}, dtype);
+        norm_1 = backend_->create_tensor({1, 1, max_temp_size, config_.hidden_size}, dtype);
+        q = backend_->create_tensor({1, 1, max_temp_size, config_.num_attention_heads * config_.head_dim}, dtype);
+        k = backend_->create_tensor({1, 1, max_temp_size, config_.num_key_value_heads * config_.head_dim}, dtype);
+        v = backend_->create_tensor({1, 1, max_temp_size, config_.num_key_value_heads * config_.head_dim}, dtype);
+        att_output = backend_->create_tensor({1, 1, max_temp_size, config_.num_attention_heads * config_.head_dim}, dtype);
+        att_proj_o = backend_->create_tensor({1, 1, max_temp_size, config_.hidden_size}, dtype);
+
+        mlp_gate = backend_->create_tensor({1, 1, max_temp_size, config_.intermediate_size}, dtype);
+        mlp_up = backend_->create_tensor({1, 1, max_temp_size, config_.intermediate_size}, dtype);
+        swiglu_output = backend_->create_tensor({1, 1, max_temp_size, config_.intermediate_size}, dtype);
+        logits = backend_->create_tensor({1, 1, max_temp_size, config_.vocab_size}, dtype);
+    }
     ~Qwen3() = default;
 
     void load_model(const std::string& model_path)
@@ -73,18 +93,23 @@ public:
     std::shared_ptr<Tensor> forward(std::shared_ptr<Tensor> input_ids, std::shared_ptr<Tensor> positions)
     {
         const int64_t batch_size = input_ids->numel();
-        std::shared_ptr<Tensor> hidden_states{backend_->create_tensor({1, 1, batch_size, config_.hidden_size}, DataType::fp32_t)};
-        std::shared_ptr<Tensor> norm_1{backend_->create_tensor({1, 1, batch_size, config_.hidden_size}, DataType::fp32_t)};
-        std::shared_ptr<Tensor> q{backend_->create_tensor({1, 1, batch_size, config_.num_attention_heads * config_.head_dim}, DataType::fp32_t)};
-        std::shared_ptr<Tensor> k{backend_->create_tensor({1, 1, batch_size, config_.num_key_value_heads * config_.head_dim}, DataType::fp32_t)};
-        std::shared_ptr<Tensor> v{backend_->create_tensor({1, 1, batch_size, config_.num_key_value_heads * config_.head_dim}, DataType::fp32_t)};
-        std::shared_ptr<Tensor> att_output{
-            backend_->create_tensor({1, 1, batch_size, config_.num_attention_heads * config_.head_dim}, DataType::fp32_t)};
-        std::shared_ptr<Tensor> att_proj_o{backend_->create_tensor({1, 1, batch_size, config_.hidden_size}, DataType::fp32_t)};
 
-        std::shared_ptr<Tensor> mlp_gate{backend_->create_tensor({1, 1, batch_size, config_.intermediate_size}, DataType::fp32_t)};
-        std::shared_ptr<Tensor> mlp_up{backend_->create_tensor({1, 1, batch_size, config_.intermediate_size}, DataType::fp32_t)};
-        std::shared_ptr<Tensor> swiglu_output{backend_->create_tensor({1, 1, batch_size, config_.intermediate_size}, DataType::fp32_t)};
+        if (batch_size < max_temp_size)
+        {
+            hidden_states->reshape({1, 1, batch_size, config_.hidden_size});
+            norm_1->reshape({1, 1, batch_size, config_.hidden_size});
+            q->reshape({1, 1, batch_size, config_.num_attention_heads * config_.head_dim});
+            k->reshape({1, 1, batch_size, config_.num_key_value_heads * config_.head_dim});
+            v->reshape({1, 1, batch_size, config_.num_key_value_heads * config_.head_dim});
+            att_output->reshape({1, 1, batch_size, config_.num_attention_heads * config_.head_dim});
+            att_proj_o->reshape({1, 1, batch_size, config_.hidden_size});
+
+            mlp_gate->reshape({1, 1, batch_size, config_.intermediate_size});
+            mlp_up->reshape({1, 1, batch_size, config_.intermediate_size});
+            swiglu_output->reshape({1, 1, batch_size, config_.intermediate_size});
+            
+        }
+
         // 1.embedding
         backend_->run({
             {"op_type", OperatorType::Embedding},
@@ -228,6 +253,7 @@ public:
                 {"input_up", mlp_up},
             });
 
+
             backend_->run({
                 {"op_type", OperatorType::Linear},
                 {"output", att_proj_o},
@@ -235,6 +261,12 @@ public:
                 {"weight", block.mlp_down},
                 {"bias", std::shared_ptr<Tensor>(nullptr)},
             });
+
+            // if(backend_->get_backend_name() != "CPU")
+            //     print_tensor_cuda(swiglu_output, 10);
+            // else
+            //     print_tensor(swiglu_output, 10);
+           
 
             // Residual connection
             backend_->run({
@@ -245,13 +277,13 @@ public:
             });
         }
 
-        return std::move(hidden_states);
+        return hidden_states;
     }
 
     std::shared_ptr<Tensor> compute_logits(std::shared_ptr<Tensor> hidden_states)
     {
         const auto batch_size = hidden_states->shape()[2];
-        auto logits = backend_->create_tensor({1, 1, batch_size, config_.vocab_size}, DataType::fp32_t);
+        logits->reshape({1, 1, batch_size, config_.vocab_size});
         backend_->run({
             {"op_type", OperatorType::RMSNorm},
             {"output", hidden_states},
@@ -267,11 +299,30 @@ public:
             {"weight", weights_->lm_head},
             {"bias", std::shared_ptr<Tensor>(nullptr)},
         });
-        return std::move(logits);
+
+        // if(backend_->get_backend_name() != "CPU")
+        //     print_tensor_cuda(logits, 10);
+        // else
+        //     print_tensor(logits, 10);
+        return logits;
     }
 
 private:
     ModelConfig config_;
     std::unique_ptr<Qwen3Weight> weights_;
     std::shared_ptr<BaseBackend> backend_;
+
+    std::shared_ptr<Tensor> hidden_states{nullptr};
+    std::shared_ptr<Tensor> norm_1{nullptr};
+    std::shared_ptr<Tensor> q{nullptr};
+    std::shared_ptr<Tensor> k{nullptr};
+    std::shared_ptr<Tensor> v{nullptr};
+    std::shared_ptr<Tensor> att_output{nullptr};
+    std::shared_ptr<Tensor> att_proj_o{nullptr};
+
+    std::shared_ptr<Tensor> mlp_gate{nullptr};
+    std::shared_ptr<Tensor> mlp_up{nullptr};
+    std::shared_ptr<Tensor> swiglu_output{nullptr};
+    std::shared_ptr<Tensor> logits{nullptr}; 
+
 };

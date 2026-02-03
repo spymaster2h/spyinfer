@@ -1,22 +1,75 @@
 {
     "version": "0.2.0",
     "configurations": [
+         {
+            "name": "spyinfer(cuda-gdb)",
+            "type": "cuda-gdb", 
+           "request": "launch",
+            "program": "${workspaceFolder}/build/linux/x86_64/debug/main",
+            "args": [
+                "-m",
+                "/data/hangzhou6/dev/model/Qwen3-0.6B",
+                "-b",
+                "cuda"
+            ],
+            "environment": [
+                {
+                    "name": "CUDA_VISIBLE_DEVICES",
+                    "value": "1"
+                },
+            ],
+            "cwd": "${workspaceFolder}"
+        },
         {
-            "name": "spyinfer(gdb)",
-            "type": "cppdbg", // 新版VS Code也可使用"gdb"
+            "name": "cuda-rms",
+            "type": "cuda-gdb", 
+           "request": "launch",
+            "program": "/data/hangzhou6/dev/engine/spyinfer/build/linux/x86_64/debug/test_performance_norm_kernel",
+            "environment": [
+                {
+                    "name": "CUDA_VISIBLE_DEVICES",
+                    "value": "1"
+                },
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "spyinfer-cpu(gdb)",
+            "type": "cppdbg", 
             "request": "launch",
             "program": "${workspaceFolder}/build/linux/x86_64/debug/main",
             "args": [
+                "-m",
                 "/data/hangzhou6/dev/model/Qwen3-0.6B"
             ],
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "spyinfer(lldb)",
-            "type": "lldb", // 新版VS Code也可使用"gdb"
+            "name": "spyinfer-cuda(gdb)",
+            "type": "cppdbg", 
             "request": "launch",
             "program": "${workspaceFolder}/build/linux/x86_64/debug/main",
             "args": [
+                "-m",
+                "/data/hangzhou6/dev/model/Qwen3-0.6B",
+                "-b",
+                "cuda"
+            ],
+            "environment": [
+                {
+                    "name": "CUDA_VISIBLE_DEVICES",
+                    "value": "1"
+                },
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "spyinfer(lldb)",
+            "type": "lldb", 
+            "request": "launch",
+            "program": "${workspaceFolder}/build/linux/x86_64/debug/main",
+            "args": [
+                "-m",
                 "/data/hangzhou6/dev/model/Qwen3-0.6B"
             ],
             "cwd": "${workspaceFolder}"

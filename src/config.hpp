@@ -2,7 +2,6 @@
 
 #include "models/model_config.hpp"
 
-
 class Config
 {
 public:
@@ -16,6 +15,7 @@ public:
 
 public:
     std::filesystem::path model;  // 模型目录或名称
+    std::string backend_type{"cpu"};  // 后端类型
     int max_num_batched_tokens{16384};  // 单批次最大token数
     int max_num_seqs{512};  // 单批次最大序列数
     int max_model_len{4096};  // 单序列最大长度
@@ -24,7 +24,8 @@ public:
     bool enforce_eager{false};  // 是否强制eager模式
     int eos{-1};  // 终止token id
     int kvcache_block_size{4};  // KV缓存块大小 4token
-    int num_kvcache_blocks{4096};  // KV缓存块数量
+    int num_kvcache_blocks{100};  // KV缓存块数量
+
 
     ModelConfig model_config;  // transformers的模型配置
 };

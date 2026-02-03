@@ -1,1 +1,1 @@
-perf record -g  ./build/linux/x86_64/debug/main /data/hangzhou6/dev/model/Qwen3-0.6B 你好,介绍一下自己
+perf record -g  ./build/linux/x86_64/debug/main /data/hangzhou6/dev/model/Qwen3-0.6B

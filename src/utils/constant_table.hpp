@@ -6,6 +6,12 @@
 #include <cmath>
 #include <vector>
 
+#include "utils/precision.hpp"
+
+#ifdef USE_CUDA
+#include <cuda_runtime.h>
+#endif
+
 
 class ConstantTable
 {
@@ -33,22 +39,37 @@ public:
             rope_sin_table_[i] = std::sin(pos * freq);
             rope_cos_table_[i] = std::cos(pos * freq);
         }
+
+        #ifdef USE_CUDA
+        cudaMalloc(&rope_sin_table_cuda_, rope_sin_table_.size() * sizeof(float));
+        cudaMalloc(&rope_cos_table_cuda_, rope_cos_table_.size() * sizeof(float));
+        cudaMemcpy(rope_sin_table_cuda_, rope_sin_table_.data(), rope_sin_table_.size() * sizeof(float), cudaMemcpyHostToDevice);
+        cudaMemcpy(rope_cos_table_cuda_, rope_cos_table_.data(), rope_cos_table_.size() * sizeof(float), cudaMemcpyHostToDevice);
+        #endif
     }
 
 public:
     std::array<float, 65536> bf16_to_fp32_table_;
+    std::array<uint16_t, 65536> bf16_to_fp16_table_;
     std::vector<float> rope_sin_table_;
     std::vector<float> rope_cos_table_;
 
+    #ifdef USE_CUDA
+    float* rope_sin_table_cuda_ = nullptr;
+    float* rope_cos_table_cuda_ = nullptr;
+    #endif
+
 
 private:
-    ConstantTable() { BuildBf16ToFp32Table(); }
+    ConstantTable() { BuildBF16Table(); }
 
-    void BuildBf16ToFp32Table()
+    void BuildBF16Table()
     {
         for (uint32_t bf16_val = 0; bf16_val < 65536; ++bf16_val)
         {
-            bf16_to_fp32_table_[bf16_val] = std::bit_cast<float>(bf16_val << 16);
+            float fp32_val = std::bit_cast<float>(bf16_val << 16);
+            bf16_to_fp32_table_[bf16_val] = fp32_val;
+            bf16_to_fp16_table_[bf16_val] = float_to_half(fp32_val);
         }
     }
 };

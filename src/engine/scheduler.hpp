@@ -12,7 +12,6 @@
 
 namespace spyinfer {
 
-// 包含单次调度步骤的所有信息
 struct ScheduleOutput
 {
     std::vector<int> prompt_tokens;
@@ -20,6 +19,7 @@ struct ScheduleOutput
     std::vector<int> context_lens;
     std::vector<int> seq_idx_mapping;
     std::vector<int> block_tables;
+    std::vector<int> cu_seqlens;
     int max_blocks_per_seq = 0;
 };
 

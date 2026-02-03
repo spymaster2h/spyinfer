@@ -2,8 +2,11 @@
 #include "cpu_operator.hpp"
 #include "cpu_attention.hpp"
 
+#include <cstring>
+
 namespace spyinfer {
-CPUBackend::CPUBackend(int thread_num, size_t thread_buffer_size) : thread_num_(thread_num), parallel_executor_(std::make_unique<ParallelExecutor>(thread_num, thread_buffer_size))
+CPUBackend::CPUBackend(int thread_num, size_t thread_buffer_size)
+    : thread_num_(thread_num), parallel_executor_(std::make_unique<ParallelExecutor>(thread_num, thread_buffer_size))
 {
     device_cnt_ = 1;
     device_ids_ = {0};
@@ -12,7 +15,7 @@ CPUBackend::CPUBackend(int thread_num, size_t thread_buffer_size) : thread_num_(
     devices_ = {BaseDevice::create(DeviceType::CPU, 0)};
 
     ops_[OperatorType::Add] = std::make_unique<Add>();
-    ops_[OperatorType::RMSNorm] = std::make_unique<RMSNorm>();  
+    ops_[OperatorType::RMSNorm] = std::make_unique<RMSNorm>();
     ops_[OperatorType::Embedding] = std::make_unique<Embedding>();
     ops_[OperatorType::Rope] = std::make_unique<Rope>();
     ops_[OperatorType::Linear] = std::make_unique<Linear>();
@@ -22,17 +25,8 @@ CPUBackend::CPUBackend(int thread_num, size_t thread_buffer_size) : thread_num_(
     ops_[OperatorType::Attention] = std::make_unique<Attention>();
 }
 
-std::shared_ptr<MemoryBlock> CPUBackend::allocate(size_t size_bytes)
-{
-    return std::make_shared<MemoryBlock>(size_bytes, devices_[0]);
-}
+void CPUBackend::copy_data_from_cpu(void* dst, const void* src, size_t size_bytes) { memcpy(dst, src, size_bytes); }
 
-
-std::shared_ptr<Tensor> CPUBackend::create_tensor(const std::array<int64_t, 4>& shape, DataType dtype)
-{
-    return Tensor::create(devices_[0], shape, dtype);
-}
-
-
+void CPUBackend::copy_data_to_cpu(void* dst, const void* src, size_t size_bytes) { memcpy(dst, src, size_bytes); }
 
 } // namespace spyinfer

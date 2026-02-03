@@ -1,0 +1,6 @@
+CompileFlags:
+  Remove:
+  [
+      '-rdc=true',
+      '-gencode',
+  ]

@@ -14,6 +14,7 @@ namespace spyinfer {
 enum class DataType
 {
     bf16_t,
+    fp16_t,
     fp32_t,
     int32_t
 };
@@ -37,6 +38,8 @@ public:
     const std::array<int64_t, 4>& shape() const { return shape_; }
     const std::array<int64_t, 4>& strides() const { return strides_; }
     DataType dtype() const { return dtype_; }
+
+    void set_dtype(DataType dtype) { dtype_ = dtype; }
     size_t numel() const { return numel_; }
     size_t offset_bytes() const { return offset_bytes_; }
 

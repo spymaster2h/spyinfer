@@ -25,7 +25,6 @@ void Attention::forward_expand(std::unordered_map<std::string, std::any>& params
 
 void Attention::compute(std::unordered_map<std::string, std::any>& params)
 {
-
     const auto& context = Context::getInstance();
     auto backend = std::any_cast<std::shared_ptr<BaseBackend>>(params["backend"]);
     auto cpu_backend = dynamic_cast<CPUBackend*>(backend.get());
@@ -37,19 +36,13 @@ void Attention::compute(std::unordered_map<std::string, std::any>& params)
     auto positions = std::any_cast<std::shared_ptr<Tensor>>(params["position_ids"]);
     auto layer = std::any_cast<int>(params["layer_ids"]);
 
-
-
-
     auto k_cache = context.k_cache;
     auto v_cache = context.v_cache;
     auto block_tables_ptr = context.block_tables; //[seq_id][logic_block_id] --> physic_block_id （历史kvcache位置）
-    auto context_lens_ptr = context.context_lens; //seq id -> seq len
+    auto context_lens_ptr = context.context_lens; // seq id -> seq len
     auto slot_mapping_ptr = context.slot_mapping; // token id -> physic offset (当前token的kv需要插入的kv cahche位置)
-    auto seq_idx_map_ptr = context.seq_idx_map; //token id -> seq id
-    auto batch_size = context.batch_size;
+    auto seq_idx_map_ptr = context.seq_idx_map;   // token id -> seq id
     auto kvcache_block_size = context.k_cache->shape()[2];
-
-
 
     const int num_query_tokens = input_q->shape()[1];
     const int num_q_heads = input_q->shape()[2];
@@ -106,7 +99,7 @@ void Attention::compute(std::unordered_map<std::string, std::any>& params)
             {
                 if (ctx_i > positions_ptr[current_token_idx])
                 {
-                    scores[ctx_i] = -INFINITY;   //causal mask
+                    scores[ctx_i] = -INFINITY; // causal mask
                     continue;
                 }
                 const int logical_block_idx = ctx_i / kvcache_block_size;
@@ -143,7 +136,6 @@ void Attention::compute(std::unordered_map<std::string, std::any>& params)
         }
     };
     cpu_backend->get_parallel_executor()->execute(attention_task);
-
 }
 
 } // namespace spyinfer

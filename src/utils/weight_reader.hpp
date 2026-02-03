@@ -23,4 +23,5 @@ public:
 
 protected:
     std::unordered_map<std::string, std::shared_ptr<Tensor>> meta_data_;
+    std::shared_ptr<MemoryBlock> weight_buffer_;
 };

@@ -1,6 +1,6 @@
 #include "scheduler.hpp"
 #include "core/base_device.hpp"
-#include <algorithm> // For std::max
+#include <algorithm>
 
 namespace spyinfer {
 
@@ -50,9 +50,11 @@ ScheduleOutput Scheduler::schedule()
 
     // 2. Build the batch for prefill and decode
     int current_seq_idx = 0;
+    output.cu_seqlens.push_back(0);
     for (auto* seq : running_queue_)
     {
         output.context_lens.push_back(seq->get_len());
+        output.cu_seqlens.push_back(output.cu_seqlens.back() + seq->get_len() - seq->token_pos);
 
         if (seq->is_prefill)
         {
@@ -80,7 +82,6 @@ ScheduleOutput Scheduler::schedule()
                     }
                     else
                     {
-                        // Cannot schedule this sequence for now
                         continue;
                     }
                 }
@@ -104,7 +105,7 @@ ScheduleOutput Scheduler::schedule()
             max_blocks = std::max(max_blocks, seq->block_table.size());
         }
         output.block_tables.resize(running_queue_.size() * max_blocks, -1);
-        output.max_blocks_per_seq = max_blocks;  
+        output.max_blocks_per_seq = max_blocks;
         int seq_idx = 0;
         for (const auto* seq : running_queue_)
         {

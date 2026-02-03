@@ -21,6 +21,9 @@ enum class OperatorType
     Attention,
     SwiGLU,
     Sigmoid,
+
+    //type cast
+    BF16ToFP16,
 };
 
 
@@ -34,7 +37,7 @@ static std::unordered_map<OperatorType,  std::vector<std::string>> operator_inpu
     {OperatorType::Attention, {"backend", "op_type", "output", "input_q", "input_k", "input_v", "position_ids", "layer_ids"}},
     {OperatorType::SwiGLU, {"backend", "op_type", "output", "input_gate", "input_up"}},
     {OperatorType::Sigmoid, {"backend", "op_type", "output", "input"}},
-
+    {OperatorType::BF16ToFP16, {"backend", "op_type", "input", "size"}},
 };
 
 

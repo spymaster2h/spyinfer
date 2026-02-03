@@ -12,7 +12,6 @@
 #include <pthread.h>
 #endif
 
-
 class Barrier
 {
 public:
