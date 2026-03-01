@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <iostream>
+#include <algorithm>
 
 namespace spyinfer {
 

@@ -69,10 +69,10 @@ void CUDABackend::print_device_properties() {
     printf("  Shared Memory per Block: %lu KB\n", prop.sharedMemPerBlock / 1024);
     printf("  Registers per Block: %d\n", prop.regsPerBlock);
     printf("  L2 Cache Size: %d KB\n", prop.l2CacheSize / 1024);
-    printf("  Memory Clock Rate: %.0f MHz\n", prop.memoryClockRate / 1000.0);
+    // printf("  Memory Clock Rate: %.0f MHz\n", prop.memoryClockRate / 1000.0);
     printf("  Memory Bus Width: %d bits\n", prop.memoryBusWidth);
-    printf("  Peak Memory Bandwidth: %.2f GB/s\n\n", 
-            2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6);
+    // printf("  Peak Memory Bandwidth: %.2f GB/s\n\n", 
+    //         2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6);
     //}
 }
 
